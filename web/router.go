@@ -6,11 +6,11 @@ import (
 
 //载入路由表
 func loadRouter() (r *mux.Router, err error) {
-	//图片服务
-	imageHandler := &ImageHandler{}
+	//缓存服务
+	cacheHandler := &CacheHandler{}
 	r = mux.NewRouter()
 	v1Subrouter := r.PathPrefix("/v1").Subrouter()
-	ih := NewImageHandler(imageHandler.Resize)
-	v1Subrouter.Handle("/image.do", ih).Methods("GET") //GET的响应处理
+	ih := NewCacheHandler(cacheHandler.Cache)
+	v1Subrouter.Handle("/cache.do", ih).Methods("GET") //GET的响应处理
 	return r, nil
 }

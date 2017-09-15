@@ -15,9 +15,6 @@ func Startup() (err error) {
 	//1.初始化配置
 	//2.初始化db层
 	//3.初始化业务功能
-
-	ImgCli = InitImageClient()
-
 	started = true
 	return
 }
