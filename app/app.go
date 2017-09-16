@@ -1,13 +1,14 @@
 package app
 
 import (
-	"github.com/coocood/freecache"
+	c "github.com/domac/dfc/cache"
 	"log"
 	"runtime/debug"
 )
 
 var started bool
 
+//global cache server
 var DefaultCacheServer *DFCServer
 
 func GetCacheServer() *DFCServer {
@@ -18,16 +19,15 @@ func GetCacheServer() *DFCServer {
 	return DefaultCacheServer
 }
 
-//服务初始化
+//Application Run
+//Just run once
 func Startup() (err error) {
 	if started {
 		return
 	}
 
-	//初始化缓存服务
 	DefaultCacheServer = NewDFCServer(1024 * 1024 * 1024)
 
-	//初始化tcp连接服务
 	sessionServer := NewSessionServer(8000)
 	sessionServer.Start()
 
@@ -35,26 +35,23 @@ func Startup() (err error) {
 	return
 }
 
-//服务关闭退出
 func Shutdown(i interface{}) {
 	println()
 	log.Println("application ready to shutdown")
 }
 
-//DFC 服务
 type DFCServer struct {
-	cache *freecache.Cache
+	cache *c.Cache
 }
 
 func NewDFCServer(cacheSize int) *DFCServer {
 	debug.SetGCPercent(20)
 	return &DFCServer{
-		cache: freecache.NewCache(cacheSize),
+		cache: c.NewCache(cacheSize),
 	}
 }
 
-//获取缓存存储
-func (d *DFCServer) Cache() *freecache.Cache {
+func (d *DFCServer) Cache() *c.Cache {
 	return d.cache
 }
 

@@ -12,16 +12,15 @@ import (
 	"strings"
 )
 
-//-----------------------------
-// 文件类操作工具类
-//-----------------------------
-
 const (
 	WRITE_APPEND = 0
 	WRITE_OVER   = 1
 )
 
-//检查指定路径的文件是否存在
+//------------------------------
+//some tool for handling file
+//------------------------------
+
 func CheckDataFileExist(filePath string) error {
 
 	if filePath == "" {
@@ -34,7 +33,6 @@ func CheckDataFileExist(filePath string) error {
 	return nil
 }
 
-//逐行读
 func ReadLine(fileName string) ([]string, error) {
 	if err := CheckDataFileExist(fileName); err != nil {
 		return []string{}, err
@@ -65,7 +63,6 @@ func ReadLine(fileName string) ([]string, error) {
 	return result, nil
 }
 
-//去重
 func RemoveDuplicatesAndEmpty(a []string) (ret []string) {
 	a_len := len(a)
 	for i := 0; i < a_len; i++ {
@@ -77,7 +74,6 @@ func RemoveDuplicatesAndEmpty(a []string) (ret []string) {
 	return
 }
 
-//删除文件
 func RemoveFile(filepath string) error {
 	err := os.Remove(filepath)
 	if err != nil {
@@ -116,7 +112,6 @@ func IsFile(filepath string) bool {
 	return true
 }
 
-//以追加的方式打开
 func openToAppend(fpath string) (*os.File, error) {
 	f, err := os.OpenFile(fpath, os.O_RDWR|os.O_APPEND, 0777)
 	if err != nil {
@@ -128,7 +123,6 @@ func openToAppend(fpath string) (*os.File, error) {
 	return f, nil
 }
 
-//以覆盖的方式打开
 func openToOverwrite(fpath string) (*os.File, error) {
 	f, err := os.OpenFile(fpath, os.O_RDWR|os.O_TRUNC, 0777)
 	if err != nil {
@@ -140,7 +134,6 @@ func openToOverwrite(fpath string) (*os.File, error) {
 	return f, nil
 }
 
-//写入文件
 func WriteIntoFile(filepath string, content []string, writeMode int) error {
 
 	var f *os.File
@@ -252,7 +245,6 @@ func GrepFile(patten string, filename string) (lines []string, err error) {
 	return lines, nil
 }
 
-//获取路径的短名称(文件名)
 func GetShortFile(fullName string) string {
 	return filepath.Base(fullName)
 }
@@ -261,7 +253,6 @@ func GetDir(fullName string) string {
 	return filepath.Dir(fullName)
 }
 
-//获取文件的扩展名(后缀)
 func GetFileExt(fullName string) string {
 	return filepath.Ext(fullName)
 }

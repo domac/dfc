@@ -6,7 +6,7 @@ import (
 	"github.com/domac/dfc/util"
 )
 
-//应用配置信息
+//application config
 type AppConfig struct {
 	Name                 string
 	Http_address         string
@@ -25,10 +25,10 @@ type AppConfig struct {
 	Peer                 []map[string]string
 }
 
-//加载配置
+//load config from the file which existing in `filepath`
 func LoadConfig(filepath string) (*AppConfig, error) {
 	if filepath == "" {
-		return nil, errors.New("配置文件路径为空")
+		return nil, errors.New("the config file dir is empty")
 	}
 	if err := util.CheckDataFileExist(filepath); err != nil {
 		return nil, err

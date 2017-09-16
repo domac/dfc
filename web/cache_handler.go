@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-//缓存处理业务
+//cache api handler
 type CacheHandler struct {
 }
 
@@ -19,19 +19,15 @@ func NewCacheHandler(f func(ctx *Context)) BaseHandler {
 	}
 }
 
-//缓存请求
 func (self *CacheHandler) Cache(ctx *Context) {
-	//获取图片URL
 	imageURL := getStringVal("url", ctx.R)
 
-	//不合法的请求
 	if !self.checkUrl(imageURL) {
-		//拒之门外
+		//reject
 		reponsePlainTextWithStatusCode(ctx.W, http.StatusBadRequest, "")
 		return
 	}
 
-	//获取缓存服务
 	cacheServer := app.GetCacheServer()
 	val, err := cacheServer.Get(imageURL)
 
@@ -39,7 +35,6 @@ func (self *CacheHandler) Cache(ctx *Context) {
 
 	if err != nil {
 		log.Printf("[MISS] %s", imageURL)
-		//直接请求文件
 		f, err := os.Open(imageURL)
 		defer func() {
 			if f != nil {
@@ -65,17 +60,14 @@ func (self *CacheHandler) Cache(ctx *Context) {
 	}
 }
 
-//从伙伴节点的缓存中获取
 func (self *CacheHandler) GetFromPeers() (data []byte, err error) {
 	return
 }
 
-//从本地存储获取
 func (self *CacheHandler) GetFromLocal() (data []byte, err error) {
 	return
 }
 
-//检验URL的合法性
 func (self *CacheHandler) checkUrl(url string) bool {
 	if url == "" || len(url) < 5 {
 		return false

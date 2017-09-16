@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-//会话服务
+//session server with rate limit
 type SessionServer struct {
 	rateLimitNum int
 }

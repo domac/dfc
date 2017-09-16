@@ -8,13 +8,12 @@ import (
 	"time"
 )
 
-//初始化本地服务端程序
+//init the server with ip:port
 func InitServer(addr string) (*http.Server, error) {
 	r, err := loadRouter()
 	if err != nil {
 		return nil, err
 	}
-	//接入http server
 	srv := &http.Server{
 		Handler:      r,
 		Addr:         addr,
@@ -24,7 +23,8 @@ func InitServer(addr string) (*http.Server, error) {
 	return srv, nil
 }
 
-//上下文信息
+//the context with request from client
+//the context with response to client
 type Context struct {
 	R         *http.Request
 	W         http.ResponseWriter
@@ -41,7 +41,7 @@ func newContext(w http.ResponseWriter, r *http.Request) *Context {
 	}
 }
 
-//方法回调
+//callback function invoked by context which happen after request
 func (ctx *Context) AddCallBack(f func()) {
 	ctx.callbacks = append(ctx.callbacks, f)
 }
@@ -53,7 +53,7 @@ func (ctx *Context) Done() {
 	}
 }
 
-//基础服务处理类
+//web api base class
 type BaseHandler struct {
 	Ctx    map[string]interface{}
 	Handle func(ctx *Context)
@@ -65,7 +65,7 @@ func NewBaseHandler(f func(ctx *Context)) BaseHandler {
 	}
 }
 
-//http服务处理
+//http main
 func (b BaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		err_ := recover()
@@ -84,11 +84,12 @@ func getStringVal(n string, r *http.Request) string {
 	return strings.TrimSpace(r.FormValue(n))
 }
 
-//以json响应
+//reponse data using Json
 func reponseJson(w http.ResponseWriter, data interface{}) {
 	reponseJsonWithStatusCode(w, http.StatusOK, data)
 }
 
+//reponse data using Json + statusCode
 func reponseJsonWithStatusCode(w http.ResponseWriter, httpCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	s := ""
@@ -103,7 +104,7 @@ func reponseJsonWithStatusCode(w http.ResponseWriter, httpCode int, data interfa
 	fmt.Fprint(w, s)
 }
 
-//以文本方式响应
+//reponse data using PlainText
 func reponsePlainText(w http.ResponseWriter, data string) {
 	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprint(w, data)

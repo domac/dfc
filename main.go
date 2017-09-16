@@ -7,26 +7,26 @@ import (
 	_ "net/http/pprof"
 )
 
+//prof command:
 //go tool pprof --seconds 50 http://localhost:10200/debug/pprof/profile
-
 func main() {
 
 	println(app.Version)
 
-	//启用应用服务
+	//start up app server
 	if err := app.Startup(); err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	//启用服务端程序
+	//open http server
 	httpServer, err := web.InitServer(":10200")
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	//启用web API
+	//open web api
 	go func() {
 		err := httpServer.ListenAndServe()
 		if err != nil {
@@ -34,10 +34,9 @@ func main() {
 		}
 	}()
 
-	// 注册退出事件, 回调函数用于清理工作
+	//register some event when user press `Ctrl + C`
 	app.On(app.EXIT, app.Shutdown)
-	// 监听退出信号
 	app.Wait()
 	app.Emit(app.EXIT, nil)
-	log.Println("application is exit !")
+	log.Println("dfc is exit !")
 }
