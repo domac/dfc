@@ -24,6 +24,10 @@ func Startup() (err error) {
 		return
 	}
 	DefaultCacheServer = NewDFCServer(1024 * 1024 * 1024)
+
+	sessionServer := NewSessionServer(8000)
+	sessionServer.Start()
+
 	started = true
 	return
 }

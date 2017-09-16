@@ -1,9 +1,12 @@
 package web
 
 import (
+	"bytes"
 	"github.com/domac/dfc/app"
+	"io"
 	"log"
 	"net/http"
+	"os"
 )
 
 //缓存处理业务
@@ -31,18 +34,34 @@ func (self *CacheHandler) Cache(ctx *Context) {
 	//获取缓存服务
 	cacheServer := app.GetCacheServer()
 	val, err := cacheServer.Get(imageURL)
+
+	var buf bytes.Buffer
+
 	if err != nil {
 		log.Printf("[MISS] %s", imageURL)
-		maxValLen := 512 * 1024
-		val = make([]byte, maxValLen+1)
-		err = cacheServer.Set(imageURL, val, 30)
+		//测试
+		f, err := os.Open(imageURL)
+		defer func() {
+			if f != nil {
+				f.Close()
+			}
+		}()
+		if err != nil {
+			log.Println("no file found")
+			reponsePlainTextWithStatusCode(ctx.W, http.StatusBadRequest, "")
+			return
+		}
+
+		io.Copy(&buf, f)
+		err = cacheServer.Set(imageURL, buf.Bytes(), 30)
 		if err != nil {
 			println(err.Error())
 		}
+		ctx.W.Write(buf.Bytes())
 	} else {
 		log.Printf("[HIT] %s", imageURL)
+		ctx.W.Write(val)
 	}
-	reponsePlainText(ctx.W, imageURL)
 }
 
 //从伙伴节点的缓存中获取
