@@ -5,7 +5,7 @@ import (
 	"runtime"
 )
 
-const Binary = "v0.0.2"
+const Binary = "v0.0.3"
 
 var (
 	Version = fmt.Sprintf("DFS %s (build %s)", Binary, runtime.Version())
