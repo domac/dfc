@@ -23,8 +23,11 @@ func Startup() (err error) {
 	if started {
 		return
 	}
+
+	//初始化缓存服务
 	DefaultCacheServer = NewDFCServer(1024 * 1024 * 1024)
 
+	//初始化tcp连接服务
 	sessionServer := NewSessionServer(8000)
 	sessionServer.Start()
 

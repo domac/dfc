@@ -19,7 +19,7 @@ func NewCacheHandler(f func(ctx *Context)) BaseHandler {
 	}
 }
 
-//请求缓存
+//缓存请求
 func (self *CacheHandler) Cache(ctx *Context) {
 	//获取图片URL
 	imageURL := getStringVal("url", ctx.R)
@@ -39,12 +39,13 @@ func (self *CacheHandler) Cache(ctx *Context) {
 
 	if err != nil {
 		log.Printf("[MISS] %s", imageURL)
-		//测试
+		//直接请求文件
 		f, err := os.Open(imageURL)
 		defer func() {
 			if f != nil {
 				f.Close()
 			}
+			buf.Reset()
 		}()
 		if err != nil {
 			log.Println("no file found")

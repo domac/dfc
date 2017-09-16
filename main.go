@@ -4,7 +4,10 @@ import (
 	"github.com/domac/dfc/app"
 	"github.com/domac/dfc/web"
 	"log"
+	_ "net/http/pprof"
 )
+
+//go tool pprof --seconds 50 http://localhost:10200/debug/pprof/profile
 
 func main() {
 
