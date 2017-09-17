@@ -44,7 +44,7 @@ func (self *CacheHandler) Cache(ctx *Context) {
 			reponsePlainTextWithStatusCode(ctx.W, http.StatusBadRequest, "no file found")
 			return
 		}
-		err = cacheServer.Set(imageURL, b, 30)
+		err = cacheServer.Set(imageURL, b)
 		if err != nil {
 			println(err.Error())
 		}

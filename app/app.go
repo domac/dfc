@@ -34,7 +34,7 @@ func Startup(configPath string) (err error) {
 		return err
 	}
 
-	DefaultCacheServer = NewDFCServer(cfg.Cache_max_size)
+	DefaultCacheServer = NewDFCServer(cfg)
 
 	//启动会话服务
 	sessionServer, err := NewSessionServer(cfg)
@@ -54,22 +54,28 @@ func Shutdown(i interface{}) {
 //处理缓存请求服务
 type DFCServer struct {
 	cache *c.Cache //free cache
+	cfg   *AppConfig
 }
 
-func NewDFCServer(cacheSize int) *DFCServer {
-	log.Printf("dfc max cache object size: %d\n", cacheSize)
+func NewDFCServer(cfg *AppConfig) *DFCServer {
+	log.Printf("dfc max cache object size: %d | expired seconds: %d\n",
+		cfg.Cache_max_size, cfg.Cache_ttl)
 	debug.SetGCPercent(20)
 	return &DFCServer{
-		cache: c.NewCache(cacheSize),
+		cache: c.NewCache(cfg.Cache_max_size),
 	}
+}
+
+func (d *DFCServer) GetConfig() *AppConfig {
+	return d.cfg
 }
 
 func (d *DFCServer) Cache() *c.Cache {
 	return d.cache
 }
 
-func (d *DFCServer) Set(key string, value []byte, expireSeconds int) (err error) {
-	err = d.cache.Set([]byte(key), value, expireSeconds)
+func (d *DFCServer) Set(key string, value []byte) (err error) {
+	err = d.cache.Set([]byte(key), value, d.cfg.Cache_ttl)
 	return
 }
 

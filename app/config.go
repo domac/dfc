@@ -34,6 +34,7 @@ type PeerInfo struct {
 	Peer_type string
 	Http_port string
 	Tcp_port  string
+	Weight    int
 }
 
 func LoadConfig(filepath string) (*AppConfig, error) {
