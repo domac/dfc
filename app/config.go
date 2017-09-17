@@ -6,11 +6,12 @@ import (
 	"github.com/domac/dfc/util"
 )
 
-//application config
+//应用配置
 type AppConfig struct {
 	Name                 string
 	Http_address         string
 	Local_store_path     string
+	Cache_max_size       int
 	Cache_ttl            int
 	Max_scheduler_num    int
 	Read_buffer_size     int
@@ -22,10 +23,18 @@ type AppConfig struct {
 	Init_reqs_per_second int
 	Max_reqs_per_second  int
 	Filter_regx          []string
-	Peer                 []map[string]string
+	Peer                 []PeerInfo
 }
 
-//load config from the file which existing in `filepath`
+//peer node config
+type PeerInfo struct {
+	Name      string
+	Addr      string
+	Peer_type string
+	Http_port string
+	Tcp_port  string
+}
+
 func LoadConfig(filepath string) (*AppConfig, error) {
 	if filepath == "" {
 		return nil, errors.New("the config file dir is empty")

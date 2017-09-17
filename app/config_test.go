@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -19,4 +20,6 @@ func TestLoadConfig(t *testing.T) {
 	if cfg.Name != "DFC_NODE" {
 		t.Fatal("load error")
 	}
+
+	fmt.Printf("%v", cfg)
 }

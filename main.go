@@ -1,10 +1,15 @@
 package main
 
 import (
+	"flag"
 	"github.com/domac/dfc/app"
 	"github.com/domac/dfc/web"
 	"log"
 	_ "net/http/pprof"
+)
+
+var (
+	config = flag.String("config", "./conf/base.conf", "set the config file path")
 )
 
 //prof command:
@@ -12,9 +17,10 @@ import (
 func main() {
 
 	println(app.Version)
+	flag.Parse()
 
 	//start up app server
-	if err := app.Startup(); err != nil {
+	if err := app.Startup(*config); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -26,7 +32,6 @@ func main() {
 		return
 	}
 
-	//open web api
 	go func() {
 		err := httpServer.ListenAndServe()
 		if err != nil {
@@ -34,9 +39,9 @@ func main() {
 		}
 	}()
 
-	//register some event when user press `Ctrl + C`
+	//注册退出事件
 	app.On(app.EXIT, app.Shutdown)
 	app.Wait()
 	app.Emit(app.EXIT, nil)
-	log.Println("dfc is exit !")
+	log.Println("dfc is exit now !")
 }

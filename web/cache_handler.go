@@ -1,12 +1,10 @@
 package web
 
 import (
-	"bytes"
 	"github.com/domac/dfc/app"
-	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 )
 
 //cache api handler
@@ -28,44 +26,33 @@ func (self *CacheHandler) Cache(ctx *Context) {
 		return
 	}
 
-	cacheServer := app.GetCacheServer()
-	val, err := cacheServer.Get(imageURL)
+	cacheServer, err := app.GetCacheServer()
 
-	var buf bytes.Buffer
+	if err != nil {
+		reponsePlainTextWithStatusCode(ctx.W, http.StatusServiceUnavailable, "")
+		return
+	}
+
+	val, err := cacheServer.Get(imageURL)
 
 	if err != nil {
 		log.Printf("[MISS] %s", imageURL)
-		f, err := os.Open(imageURL)
-		defer func() {
-			if f != nil {
-				f.Close()
-			}
-			buf.Reset()
-		}()
+		//读取文件数据
+		b, err := ioutil.ReadFile(imageURL)
 		if err != nil {
 			log.Println("no file found")
-			reponsePlainTextWithStatusCode(ctx.W, http.StatusBadRequest, "")
+			reponsePlainTextWithStatusCode(ctx.W, http.StatusBadRequest, "no file found")
 			return
 		}
-
-		io.Copy(&buf, f)
-		err = cacheServer.Set(imageURL, buf.Bytes(), 30)
+		err = cacheServer.Set(imageURL, b, 30)
 		if err != nil {
 			println(err.Error())
 		}
-		ctx.W.Write(buf.Bytes())
+		ctx.W.Write(b)
 	} else {
 		log.Printf("[HIT] %s", imageURL)
 		ctx.W.Write(val)
 	}
-}
-
-func (self *CacheHandler) GetFromPeers() (data []byte, err error) {
-	return
-}
-
-func (self *CacheHandler) GetFromLocal() (data []byte, err error) {
-	return
 }
 
 func (self *CacheHandler) checkUrl(url string) bool {
