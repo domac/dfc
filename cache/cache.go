@@ -4,10 +4,10 @@ import (
 	"encoding/binary"
 	"sync"
 	"sync/atomic"
-
-	"github.com/spaolacci/murmur3"
 )
 
+//freecache
+//会根据cache size 进行预分配
 type Cache struct {
 	locks     [256]sync.Mutex
 	segments  [256]segment
@@ -16,13 +16,12 @@ type Cache struct {
 }
 
 func hashFunc(data []byte) uint64 {
-	return murmur3.Sum64(data)
+	return Sum64(data)
 }
 
-// The cache size will be set to 512KB at minimum.
-// If the size is set relatively large, you should call
-// `debug.SetGCPercent()`, set it to a much smaller value
-// to limit the memory consumption and GC pause time.
+// cache 最小对象数量为512KB
+// 假如 cache size 设置相当大的情况下，
+// 建议设置`debug.SetGCPercent()` 来限制内存的消耗和GC的停顿时间
 func NewCache(size int) (cache *Cache) {
 	if size < 512*1024 {
 		size = 512 * 1024
@@ -34,9 +33,9 @@ func NewCache(size int) (cache *Cache) {
 	return
 }
 
-// If the key is larger than 65535 or value is larger than 1/1024 of the cache size,
-// the entry will not be written to the cache. expireSeconds <= 0 means no expire,
-// but it can be evicted when cache is full.
+// 如果key的数量大于65535 或者 value的数量大于总cache的1/1024
+// 缓存entry不会被写入成功。
+// expireSeconds当设置为0时候，表示永不过期， 但当cache满后，旧的entry也会被淘汰
 func (cache *Cache) Set(key, value []byte, expireSeconds int) (err error) {
 	hashVal := hashFunc(key)
 	segId := hashVal & 255
@@ -46,7 +45,6 @@ func (cache *Cache) Set(key, value []byte, expireSeconds int) (err error) {
 	return
 }
 
-// Get the value or not found error.
 func (cache *Cache) Get(key []byte) (value []byte, err error) {
 	hashVal := hashFunc(key)
 	segId := hashVal & 255
@@ -116,9 +114,6 @@ func (cache *Cache) EntryCount() (entryCount int64) {
 	return
 }
 
-// The average unix timestamp when a entry being accessed.
-// Entries have greater access time will be evacuated when it
-// is about to be overwritten by new value.
 func (cache *Cache) AverageAccessTime() int64 {
 	var entryCount, totalTime int64
 	for i := 0; i < 256; i++ {

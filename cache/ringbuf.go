@@ -9,14 +9,13 @@ import (
 
 var ErrOutOfRange = errors.New("out of range")
 
-// Ring buffer has a fixed size, when data exceeds the
-// size, old data will be overwritten by new data.
-// It only contains the data in the stream from begin to end
+//coocood free cache
+//Ring buffer 固化了大小， 当数据超过边界，新数据会覆盖旧数据
 type RingBuf struct {
 	begin int64 // beginning offset of the data stream.
 	end   int64 // ending offset of the data stream.
 	data  []byte
-	index int //range from '0' to 'len(rb.data)-1'
+	index int //范围 '0' to 'len(rb.data)-1'
 }
 
 func NewRingBuf(size int, begin int64) (rb RingBuf) {
@@ -27,7 +26,6 @@ func NewRingBuf(size int, begin int64) (rb RingBuf) {
 	return
 }
 
-// Create a copy of the buffer.
 func (rb *RingBuf) Dump() []byte {
 	dump := make([]byte, len(rb.data))
 	copy(dump, rb.data)
@@ -50,7 +48,6 @@ func (rb *RingBuf) End() int64 {
 	return rb.end
 }
 
-// read up to len(p), at off of the data stream.
 func (rb *RingBuf) ReadAt(p []byte, off int64) (n int, err error) {
 	if off > rb.end || off < rb.begin {
 		err = ErrOutOfRange
@@ -153,8 +150,6 @@ func (rb *RingBuf) EqualAt(p []byte, off int64) bool {
 	}
 }
 
-// Evacuate read the data at off, then write it to the the data stream,
-// Keep it from being overwritten by new data.
 func (rb *RingBuf) Evacuate(off int64, length int) (newOff int64) {
 	if off+int64(length) > rb.end || off < rb.begin {
 		return -1

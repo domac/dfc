@@ -13,15 +13,14 @@ var ErrLargeKey = errors.New("The key is larger than 65535")
 var ErrLargeEntry = errors.New("The entry size is larger than 1/1024 of cache size")
 var ErrNotFound = errors.New("Entry not found")
 
-// entry pointer struct points to an entry in ring buffer
+//entry pointer 结构 指向ring buffer的某个entry
 type entryPtr struct {
 	offset   int64  // entry offset in ring buffer
-	hash16   uint16 // entries are ordered by hash16 in a slot.
-	keyLen   uint16 // used to compare a key
+	hash16   uint16 // entries 在 slot采用 hash16 来排序
+	keyLen   uint16 // 用于 key 比较
 	reserved uint32
 }
 
-// entry header struct in ring buffer, followed by key and value.
 type entryHdr struct {
 	accessTime uint32
 	expireAt   uint32
@@ -34,21 +33,21 @@ type entryHdr struct {
 	reserved   uint16
 }
 
-// a segment contains 256 slots, a slot is an array of entry pointers ordered by hash16 value
-// the entry can be looked up by hash value of the key.
+// 一个 segment 包含 256 个 slots
+// 一个 slot 代表 一个 entry指针数组 （通过hash16排序和looked up）
 type segment struct {
-	rb            RingBuf // ring buffer that stores data
+	rb            RingBuf // ring buffer 负责存储 data
 	segId         int
 	entryCount    int64
-	totalCount    int64      // number of entries in ring buffer, including deleted entries.
-	totalTime     int64      // used to calculate least recent used entry.
-	totalEvacuate int64      // used for debug
-	totalExpired  int64      // used for debug
-	overwrites    int64      // used for debug
-	vacuumLen     int64      // up to vacuumLen, new data can be written without overwriting old data.
-	slotLens      [256]int32 // The actual length for every slot.
-	slotCap       int32      // max number of entry pointers a slot can hold.
-	slotsData     []entryPtr // shared by all 256 slots
+	totalCount    int64 // ring buffer 里面总 entry 数量
+	totalTime     int64
+	totalEvacuate int64
+	totalExpired  int64
+	overwrites    int64
+	vacuumLen     int64
+	slotLens      [256]int32 // 每个slot的实际数量
+	slotCap       int32
+	slotsData     []entryPtr
 }
 
 func newSegment(bufSize int, segId int) (seg segment) {
@@ -102,7 +101,7 @@ func (seg *segment) set(key, value []byte, hashVal uint64, expireSeconds int) (e
 			seg.overwrites++
 			return
 		}
-		// avoid unnecessary memory copy.
+		// 避免不需要的内存拷贝
 		seg.delEntryPtr(slotId, hash16, seg.slotsData[idx].offset)
 		match = false
 		// increase capacity and limit entry len.
@@ -128,11 +127,8 @@ func (seg *segment) set(key, value []byte, hashVal uint64, expireSeconds int) (e
 	entryLen := ENTRY_HDR_SIZE + int64(len(key)) + int64(hdr.valCap)
 	slotModified := seg.evacuate(entryLen, slotId, now)
 	if slotModified {
-		// the slot has been modified during evacuation, we need to looked up for the 'idx' again.
-		// otherwise there would be index out of bound error.
 		slot = seg.slotsData[slotOff : slotOff+seg.slotLens[slotId] : slotOff+seg.slotCap]
 		idx, match = seg.lookup(slot, hash16, key)
-		// assert(match == false)
 	}
 	newOff := seg.rb.End()
 	seg.insertEntryPtr(slotId, hash16, newOff, idx, hdr.keyLen)
@@ -176,7 +172,6 @@ func (seg *segment) evacuate(entryLen int64, slotId uint8, now uint32) (slotModi
 				seg.totalExpired++
 			}
 		} else {
-			// evacuate an old entry that has been accessed recently for better cache hit rate.
 			newOff := seg.rb.Evacuate(oldOff, int(oldEntryLen))
 			seg.updateEntryPtr(oldHdr.slotId, oldHdr.hash16, oldOff, newOff)
 			consecutiveEvacuate++

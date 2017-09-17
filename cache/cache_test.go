@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+//测试缓存的相关功能
 func TestFreeCache(t *testing.T) {
 	cache := NewCache(1024)
 	if cache.HitRate() != 0 {
@@ -89,6 +90,7 @@ func TestFreeCache(t *testing.T) {
 		cache.HitRate(), cache.EvacuateCount(), cache.EntryCount(), cache.AverageAccessTime(), cache.ExpiredCount())
 }
 
+//测试缓存覆盖写
 func TestOverwrite(t *testing.T) {
 	cache := NewCache(1024)
 	key := []byte("abcd")

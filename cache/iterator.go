@@ -5,7 +5,6 @@ import (
 	"unsafe"
 )
 
-// Iterator iterates the entries for the cache.
 type Iterator struct {
 	cache      *Cache
 	segmentIdx int
@@ -13,15 +12,11 @@ type Iterator struct {
 	entryIdx   int
 }
 
-// Entry represents a key/value pair.
 type Entry struct {
 	Key   []byte
 	Value []byte
 }
 
-// Next returns the next entry for the iterator.
-// The order of the entries is not guaranteed.
-// If there is no more entries to return, nil will be returned.
 func (it *Iterator) Next() *Entry {
 	for it.segmentIdx < 256 {
 		entry := it.nextForSegment(it.segmentIdx)
@@ -72,7 +67,6 @@ func (it *Iterator) nextForSlot(seg *segment, slotId int) *Entry {
 	return nil
 }
 
-// NewIterator creates a new iterator for the cache.
 func (cache *Cache) NewIterator() *Iterator {
 	return &Iterator{
 		cache: cache,
