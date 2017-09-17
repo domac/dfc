@@ -36,8 +36,11 @@ func Startup(configPath string) (err error) {
 
 	DefaultCacheServer = NewDFCServer(cfg.Cache_max_size)
 
-	sessionServer := NewSessionServer(cfg.Max_reqs_per_second)
-	sessionServer.Start()
+	//启动会话服务
+	sessionServer, err := NewSessionServer(cfg)
+	if err == nil {
+		sessionServer.Start()
+	}
 
 	started = true
 	return

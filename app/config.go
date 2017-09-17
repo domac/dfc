@@ -10,6 +10,7 @@ import (
 type AppConfig struct {
 	Name                 string
 	Http_address         string
+	Tcp_address          string
 	Local_store_path     string
 	Cache_max_size       int
 	Cache_ttl            int
