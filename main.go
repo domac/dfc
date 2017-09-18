@@ -19,14 +19,22 @@ func main() {
 	println(app.Version)
 	flag.Parse()
 
+	log.Printf("app config file : %s\n", *config)
+	cfg, err := app.LoadConfig(*config)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
 	//start up app server
-	if err := app.Startup(*config); err != nil {
+	if err := app.Startup(cfg); err != nil {
 		log.Fatal(err)
 		return
 	}
 
 	//open http server
-	httpServer, err := web.InitServer(":10200")
+	log.Printf("app is listening %s", cfg.Http_address)
+	httpServer, err := web.InitServer(cfg.Http_address)
 	if err != nil {
 		log.Fatal(err)
 		return
