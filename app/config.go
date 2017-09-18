@@ -24,7 +24,7 @@ type AppConfig struct {
 	Init_reqs_per_second int
 	Max_reqs_per_second  int
 	Filter_regx          []string
-	Peer                 []PeerInfo
+	Peer                 []*PeerInfo
 }
 
 //peer node config

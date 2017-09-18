@@ -14,6 +14,8 @@ var ErrNullCacheServer = errors.New("cache server was null")
 //全局默认缓存服务
 var DefaultCacheServer *DFCServer
 
+var DefaultPeerRoundRobin *SessionPeers
+
 func GetCacheServer() (*DFCServer, error) {
 	if DefaultCacheServer == nil {
 		return nil, ErrNullCacheServer
@@ -22,16 +24,9 @@ func GetCacheServer() (*DFCServer, error) {
 }
 
 //总服务开关
-func Startup(configPath string) (err error) {
+func Startup(cfg *AppConfig) (err error) {
 	if started {
 		return
-	}
-
-	log.Printf("config file : %s\n", configPath)
-
-	cfg, err := LoadConfig(configPath)
-	if err != nil {
-		return err
 	}
 
 	DefaultCacheServer = NewDFCServer(cfg)
@@ -41,6 +36,9 @@ func Startup(configPath string) (err error) {
 	if err == nil {
 		sessionServer.Start()
 	}
+
+	peerInfos := cfg.Peer
+	DefaultPeerRoundRobin, _ = NewSessionPeers(peerInfos)
 
 	started = true
 	return

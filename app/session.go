@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"fmt"
 	"github.com/domac/husky"
 	"github.com/domac/husky/pb"
 	"log"
@@ -49,14 +50,11 @@ func (self *SessionServer) Start() {
 
 			bm := &pb.BytesMessage{}
 			husky.UnmarshalPbMessage(p.Data, bm)
-			req := string(bm.GetBody())
-			println(req)
-
-			//响应请求
-			resp := husky.NewPbBytesPacket(1, "cache_resp", []byte("cache-reponse"))
-
-			//异步响应
-			remoteClient.Write(*resp)
+			//接收响应
+			if bm.GetHeader().GetFunctionType() == "cache_req" {
+				resp := husky.NewPbBytesPacket(1, "cache_resp", bm.GetBody())
+				remoteClient.Write(*resp)
+			}
 		})
 	simpleServer.ListenAndServer()
 }
@@ -84,26 +82,50 @@ func NewSessionPeers(peerInfos []*PeerInfo) (*SessionPeers, error) {
 			continue
 		}
 
+		hc, err := createPeerSession(p)
+		if err != nil {
+			continue
+		}
+
 		switch p.Peer_type {
 		case "parent":
 			parentWrr.Add(p, p.Weight)
 		case "sibling":
 			siblingWrr.Add(p, p.Weight)
-		default:
-			continue
 		}
-
-		addr := p.Addr
-		hc, err := createPeerSession(addr)
-		if err != nil {
-			peersSessions[addr] = hc
-		}
+		peersSessions["parent"] = hc
 	}
 
 	return &SessionPeers{
-		ParentWrr:  parentWrr,
-		SiblingWrr: siblingWrr,
+		ParentWrr:     parentWrr,
+		SiblingWrr:    siblingWrr,
+		PeersSessions: peersSessions,
 	}, nil
+}
+
+//创建集群节点连接session
+func createPeerSession(p *PeerInfo) (*husky.HClient, error) {
+
+	if p.Peer_type != "parent" && p.Peer_type != "sibling" {
+		return nil, errors.New("create Peers fail, wrong peer type")
+	}
+
+	if p.Tcp_port == "" {
+		return nil, errors.New("create Peers fail, wrong peer type")
+	}
+
+	tcp_addr := fmt.Sprintf("%s:%s", p.Addr, p.Tcp_port)
+	log.Printf("create a %s session to %s\n", p.Peer_type, tcp_addr)
+	conn, err := husky.Dial(tcp_addr)
+	if err != nil {
+		println(err.Error())
+	}
+	simpleClient := husky.NewClient(conn, nil, nil)
+	if simpleClient != nil {
+		simpleClient.Start()
+		return simpleClient, nil
+	}
+	return nil, errors.New("create Peers fail")
 }
 
 //重置
@@ -130,9 +152,4 @@ func (self *SessionPeers) Remove() {
 	for addr, _ := range self.PeersSessions {
 		delete(self.PeersSessions, addr)
 	}
-}
-
-func createPeerSession(addr string) (*husky.HClient, error) {
-	log.Printf("create a session to %s\n", addr)
-	return nil, nil
 }
