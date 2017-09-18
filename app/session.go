@@ -106,6 +106,12 @@ func NewSessionPeers(peerInfos []*PeerInfo) (*SessionPeers, error) {
 //创建集群节点连接session
 func createPeerSession(p *PeerInfo) (*husky.HClient, error) {
 
+	defer func() {
+		if err := recover(); err != nil {
+			println("conn fail")
+		}
+	}()
+
 	if p.Peer_type != "parent" && p.Peer_type != "sibling" {
 		return nil, errors.New("create Peers fail, wrong peer type")
 	}
