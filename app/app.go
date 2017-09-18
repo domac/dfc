@@ -63,6 +63,7 @@ func NewDFCServer(cfg *AppConfig) *DFCServer {
 	debug.SetGCPercent(20)
 	return &DFCServer{
 		cache: c.NewCache(cfg.Cache_max_size),
+		cfg:   cfg,
 	}
 }
 

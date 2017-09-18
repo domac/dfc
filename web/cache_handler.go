@@ -45,6 +45,7 @@ func (self *CacheHandler) Cache(ctx *Context) {
 			return
 		}
 		err = cacheServer.Set(imageURL, b)
+		//err = cacheServer.Cache().Set(key, b, 60*60*24)
 		if err != nil {
 			println(err.Error())
 		}
