@@ -52,8 +52,19 @@ func (self *SessionServer) Start() {
 			husky.UnmarshalPbMessage(p.Data, bm)
 			//接收响应
 			if bm.GetHeader().GetFunctionType() == "cache_req" {
-				resp := husky.NewPbBytesPacket(1, "cache_resp", bm.GetBody())
-				remoteClient.Write(*resp)
+
+				key := bm.GetBody()
+
+				val, err := DefaultCacheServer.Cache().Get(key)
+
+				if err != nil {
+					resp := husky.NewPbBytesPacket(1, "cache_resp", []byte{})
+					remoteClient.Write(*resp)
+				} else {
+					resp := husky.NewPbBytesPacket(1, "cache_resp", val)
+					remoteClient.Write(*resp)
+				}
+
 			}
 		})
 	simpleServer.ListenAndServer()
@@ -61,9 +72,8 @@ func (self *SessionServer) Start() {
 
 //集群会话信息
 type SessionPeers struct {
-	PeersSessions map[string]*husky.HClient
-	ParentWrr     RR //轮询策略
-	SiblingWrr    RR //轮询策略
+	ParentWrr  RR //轮询策略
+	SiblingWrr RR //轮询策略
 }
 
 func NewSessionPeers(peerInfos []*PeerInfo) (*SessionPeers, error) {
@@ -75,15 +85,8 @@ func NewSessionPeers(peerInfos []*PeerInfo) (*SessionPeers, error) {
 	parentWrr := NewWeightedRR(RR_NGINX)
 	siblingWrr := NewWeightedRR(RR_NGINX)
 
-	peersSessions := make(map[string]*husky.HClient)
-
 	for _, p := range peerInfos {
 		if p.Addr == "" || p.Peer_type == "" {
-			continue
-		}
-
-		hc, err := createPeerSession(p)
-		if err != nil {
 			continue
 		}
 
@@ -93,18 +96,16 @@ func NewSessionPeers(peerInfos []*PeerInfo) (*SessionPeers, error) {
 		case "sibling":
 			siblingWrr.Add(p, p.Weight)
 		}
-		peersSessions["parent"] = hc
 	}
 
 	return &SessionPeers{
-		ParentWrr:     parentWrr,
-		SiblingWrr:    siblingWrr,
-		PeersSessions: peersSessions,
+		ParentWrr:  parentWrr,
+		SiblingWrr: siblingWrr,
 	}, nil
 }
 
 //创建集群节点连接session
-func createPeerSession(p *PeerInfo) (*husky.HClient, error) {
+func CreatePeerSession(p *PeerInfo) (*husky.HClient, error) {
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -146,16 +147,4 @@ func (self *SessionPeers) Remove() {
 
 	self.ParentWrr.RemoveAll()
 	self.SiblingWrr.RemoveAll()
-
-	//关闭当前的会话
-	for _, p := range self.PeersSessions {
-		if p != nil && !p.IsClosed() {
-			p.Shutdown()
-		}
-	}
-
-	//清理剩余数据
-	for addr, _ := range self.PeersSessions {
-		delete(self.PeersSessions, addr)
-	}
 }

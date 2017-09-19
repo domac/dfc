@@ -66,11 +66,6 @@ func (self *CacheHandler) Cache(ctx *Context) {
 func (self *CacheHandler) AskPeers(imageURL string) (ret []byte, err error) {
 	rr := app.DefaultPeerRoundRobin
 
-	//没有集群信息
-	if len(rr.PeersSessions) == 0 {
-		return nil, nil
-	}
-
 	if rr.ParentWrr == nil {
 		return nil, nil
 	}
@@ -88,21 +83,24 @@ func (self *CacheHandler) AskPeers(imageURL string) (ret []byte, err error) {
 
 func (self *CacheHandler) getPeerCache(imageURL string, p *app.PeerInfo) ([]byte, error) {
 
-	if hc, ok := app.DefaultPeerRoundRobin.PeersSessions["parent"]; ok {
-		if hc != nil {
-			//响应请求
-			req := husky.NewPbBytesPacket(1, "cache_req", []byte(imageURL))
-			resp, err := hc.SyncWrite(*req, 500*time.Millisecond)
-			if err != nil {
-				return nil, err
-			}
-			if resp != nil {
-				bm := &pb.BytesMessage{}
-				husky.UnmarshalPbMessage(resp.([]byte), bm)
-				return bm.GetBody(), nil
-			}
-		}
+	hclient, err := app.CreatePeerSession(p)
+	if err != nil {
+		return nil, err
 	}
+
+	req := husky.NewPbBytesPacket(1, "cache_req", []byte(imageURL))
+	resp, err := hclient.SyncWrite(*req, 500*time.Millisecond)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if resp != nil {
+		bm := &pb.BytesMessage{}
+		husky.UnmarshalPbMessage(resp.([]byte), bm)
+		return bm.GetBody(), nil
+	}
+
 	return nil, nil
 }
 
