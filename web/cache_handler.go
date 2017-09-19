@@ -84,6 +84,7 @@ func (self *CacheHandler) AskPeers(imageURL string) (ret []byte, err error) {
 func (self *CacheHandler) getPeerCache(imageURL string, p *app.PeerInfo) ([]byte, error) {
 
 	hclient, err := app.CreatePeerSession(p)
+	defer hclient.Shutdown()
 	if err != nil {
 		return nil, err
 	}
