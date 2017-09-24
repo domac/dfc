@@ -43,10 +43,7 @@ func (self *SessionServer) Start() {
 
 	log.Printf("session tcp server : %s\n", self.tcpAddr)
 
-	rateLimitNum := 8000 //限流速率
-	cfg := husky.NewConfig(1000, 4*1024, 4*1024, 10000, 10000, 10*time.Second, 160000, -1, rateLimitNum)
-
-	simpleServer := husky.NewServer(self.tcpAddr, cfg, func(remoteClient *husky.HClient, p *husky.Packet) {
+	simpleServer := husky.NewServer(self.tcpAddr, self.hconfig, func(remoteClient *husky.HClient, p *husky.Packet) {
 
 		if p.Header.ContentType == husky.PB_BYTES_MESSAGE {
 			bm := &pb.BytesMessage{}
@@ -54,13 +51,14 @@ func (self *SessionServer) Start() {
 
 			key := string(bm.GetBody())
 
+			//如果value过大,可能会出错
 			log.Printf("request key is %s", key)
-
+			val, _ := DefaultCacheServer.Cache().Get([]byte(key))
 			if DefaultCacheServer == nil {
 				log.Println("cache server is null")
 			}
 			//直接回写回去
-			resp := husky.NewPbBytesPacket(p.Header.PacketId, "demo_server_function", []byte(key+"_resp"))
+			resp := husky.NewPbBytesPacket(p.Header.PacketId, "demo_server_function", val)
 			remoteClient.Write(*resp)
 		} else {
 			resp := husky.NewPacket([]byte("get string"))
