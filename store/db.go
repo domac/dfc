@@ -2,6 +2,7 @@ package store
 
 import (
 	"github.com/syndtr/goleveldb/leveldb"
+	"log"
 )
 
 //const KEY_PREFIX = "dfc:cache:"
@@ -13,6 +14,7 @@ type ResourceDB struct {
 }
 
 func OpenResourceDB(filepath string) (*ResourceDB, error) {
+	log.Println("opening a new resourceDB")
 	db, err := leveldb.OpenFile(filepath, nil)
 	if err != nil {
 		return nil, err
@@ -51,6 +53,7 @@ func (self *ResourceDB) Keys() []string {
 }
 
 func (self *ResourceDB) Close() error {
+	log.Println("resourceDB is closing")
 	if self.DB != nil {
 		return self.DB.Close()
 	}

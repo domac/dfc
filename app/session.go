@@ -40,29 +40,32 @@ func NewSessionServer(cfg *AppConfig) (*SessionServer, error) {
 
 func (self *SessionServer) Start() {
 	log.Println("open session management")
+
+	log.Printf("session tcp server : %s\n", self.tcpAddr)
+
 	simpleServer := husky.NewServer(self.tcpAddr, self.hconfig,
 		//消息接收回调函数
 		func(remoteClient *husky.HClient, p *husky.Packet) {
-
 			if p.Data == nil || p.Header.ContentType != husky.PB_BYTES_MESSAGE {
 				return
 			}
-
 			bm := &pb.BytesMessage{}
 			husky.UnmarshalPbMessage(p.Data, bm)
 			//接收响应
 			if bm.GetHeader().GetFunctionType() == "cache_req" {
 
 				key := bm.GetBody()
-
+				//从in-memory缓存中尝试获取
 				val, err := DefaultCacheServer.Cache().Get(key)
 
 				if err != nil {
 					resp := husky.NewPbBytesPacket(1, "cache_resp", []byte{})
 					remoteClient.Write(*resp)
 				} else {
+					log.Println("respone to client start")
 					resp := husky.NewPbBytesPacket(1, "cache_resp", val)
 					remoteClient.Write(*resp)
+					log.Println("respone to client end")
 				}
 
 			}
@@ -119,7 +122,7 @@ func CreatePeerSession(p *PeerInfo) (*husky.HClient, error) {
 	log.Printf("create a %s session to %s\n", p.Peer_type, tcp_addr)
 	conn, err := husky.Dial(tcp_addr)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println(">>>>ERROR:", err.Error())
 		return nil, err
 	}
 	simpleClient := husky.NewClient(conn, nil, nil)

@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	c "github.com/domac/dfc/cache"
+	"github.com/domac/dfc/store"
 	"log"
 	"runtime/debug"
 )
@@ -13,14 +14,18 @@ var ErrNullCacheServer = errors.New("cache server was null")
 
 //全局默认缓存服务
 var DefaultCacheServer *DFCServer
-
 var DefaultPeerRoundRobin *SessionPeers
+var DefaultResourceDB *store.ResourceDB
 
 func GetCacheServer() (*DFCServer, error) {
 	if DefaultCacheServer == nil {
 		return nil, ErrNullCacheServer
 	}
 	return DefaultCacheServer, nil
+}
+
+func GetResourceDB() (*store.ResourceDB, error) {
+	return DefaultResourceDB, nil
 }
 
 //总服务开关
@@ -37,6 +42,11 @@ func Startup(cfg *AppConfig) (err error) {
 		sessionServer.Start()
 	}
 
+	DefaultResourceDB, err = store.OpenResourceDB(cfg.Local_store_path)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
 	peerInfos := cfg.Peer
 	DefaultPeerRoundRobin, _ = NewSessionPeers(peerInfos)
 
@@ -44,8 +54,12 @@ func Startup(cfg *AppConfig) (err error) {
 	return
 }
 
+//停止服务
 func Shutdown(i interface{}) {
 	println()
+	if DefaultResourceDB != nil {
+		DefaultResourceDB.Close()
+	}
 	log.Println("application ready to shutdown")
 }
 
