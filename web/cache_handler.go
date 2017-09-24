@@ -38,7 +38,7 @@ func (self *CacheHandler) Cache(ctx *Context) {
 
 	val, err := cacheServer.Get(imageURL)
 	if err != nil {
-		log.Printf("[MISS] %s", imageURL)
+		log.Printf("[MEMORY MISS] %s", imageURL)
 		//读取文件数据
 		b, err := ioutil.ReadFile(imageURL)
 		if err != nil {
@@ -84,8 +84,13 @@ func (self *CacheHandler) AskPeers(imageURL string) (ret []byte, err error) {
 func (self *CacheHandler) getPeerCache(imageURL string, p *app.PeerInfo) ([]byte, error) {
 
 	hclient, err := app.CreatePeerSession(p)
-	defer hclient.Shutdown()
+	defer func() {
+		if hclient != nil {
+			hclient.Shutdown()
+		}
+	}()
 	if err != nil {
+		log.Println("connect to peer fail")
 		return nil, err
 	}
 
