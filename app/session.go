@@ -43,34 +43,32 @@ func (self *SessionServer) Start() {
 
 	log.Printf("session tcp server : %s\n", self.tcpAddr)
 
-	simpleServer := husky.NewServer(self.tcpAddr, self.hconfig,
-		//消息接收回调函数
-		func(remoteClient *husky.HClient, p *husky.Packet) {
-			if p.Data == nil || p.Header.ContentType != husky.PB_BYTES_MESSAGE {
-				return
-			}
+	rateLimitNum := 8000 //限流速率
+	cfg := husky.NewConfig(1000, 4*1024, 4*1024, 10000, 10000, 10*time.Second, 160000, -1, rateLimitNum)
+
+	simpleServer := husky.NewServer(self.tcpAddr, cfg, func(remoteClient *husky.HClient, p *husky.Packet) {
+
+		if p.Header.ContentType == husky.PB_BYTES_MESSAGE {
 			bm := &pb.BytesMessage{}
 			husky.UnmarshalPbMessage(p.Data, bm)
-			//接收响应
-			if bm.GetHeader().GetFunctionType() == "cache_req" {
 
-				key := bm.GetBody()
-				//从in-memory缓存中尝试获取
-				val, err := DefaultCacheServer.Cache().Get(key)
+			key := string(bm.GetBody())
 
-				if err != nil {
-					resp := husky.NewPbBytesPacket(1, "cache_resp", []byte{})
-					remoteClient.Write(*resp)
-				} else {
-					log.Println("respone to client start")
-					resp := husky.NewPbBytesPacket(1, "cache_resp", val)
-					remoteClient.Write(*resp)
-					log.Println("respone to client end")
-				}
+			log.Printf("request key is %s", key)
 
+			if DefaultCacheServer == nil {
+				log.Println("cache server is null")
 			}
-		})
+			//直接回写回去
+			resp := husky.NewPbBytesPacket(p.Header.PacketId, "demo_server_function", []byte(key+"_resp"))
+			remoteClient.Write(*resp)
+		} else {
+			resp := husky.NewPacket([]byte("get string"))
+			remoteClient.Write(*resp)
+		}
+	})
 	simpleServer.ListenAndServer()
+
 }
 
 //集群会话信息

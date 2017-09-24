@@ -125,7 +125,7 @@ func (self *CacheHandler) getPeerCache(imageURL string, p *app.PeerInfo) ([]byte
 	}
 
 	req := husky.NewPbBytesPacket(1, "cache_req", []byte(imageURL))
-	resp, err := hclient.SyncWrite(*req, 10*time.Second)
+	resp, err := hclient.SyncWrite(*req, 1*time.Second)
 
 	if err != nil {
 		println(">>>", err.Error())
