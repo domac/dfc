@@ -86,10 +86,17 @@ func (self *CacheHandler) FindCacheData(imageURL string) (ret []byte, err error)
 	}
 	log.GetLogger().Infof("[LOCAL FILE MISS] %s", imageURL)
 
+	ret, err = self.FindCacheDataBySiblings(imageURL)
+	if ret != nil && err == nil {
+		log.GetLogger().Infof("[SIBLING TCP HIT] %s", imageURL)
+		resourceDB.Set([]byte(imageURL), ret)
+		return
+	}
+
 	//从集群peer中获取
 	ret, err = self.FindCacheDataByParents(imageURL)
 	if ret != nil && err == nil {
-		log.GetLogger().Infof("[PEER TCP HIT] %s", imageURL)
+		log.GetLogger().Infof("[PARENT TCP HIT] %s", imageURL)
 		resourceDB.Set([]byte(imageURL), ret)
 	}
 	return
