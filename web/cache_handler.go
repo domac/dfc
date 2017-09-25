@@ -3,10 +3,10 @@ package web
 import (
 	"errors"
 	"github.com/domac/dfc/app"
+	"github.com/domac/dfc/log"
 	"github.com/domac/husky"
 	"github.com/domac/husky/pb"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 )
@@ -42,7 +42,7 @@ func (self *CacheHandler) Cache(ctx *Context) {
 	//从in-memory中尝试获取
 	val, err := cacheServer.Get(imageURL)
 	if err != nil {
-		log.Printf("[MEMORY MISS] %s", imageURL)
+		log.GetLogger().Infof("[MEMORY MISS] %s", imageURL)
 		b, err := self.FindCacheData(imageURL)
 		if err != nil || b == nil || len(b) == 0 {
 			reponsePlainTextWithStatusCode(ctx.W, http.StatusBadRequest, "no cache data found")
@@ -55,7 +55,7 @@ func (self *CacheHandler) Cache(ctx *Context) {
 		}
 		ctx.W.Write(b)
 	} else {
-		log.Printf("[MEMORY HIT] %s", imageURL)
+		log.GetLogger().Infof("[MEMORY HIT] %s", imageURL)
 		ctx.W.Write(val)
 	}
 }
@@ -69,25 +69,25 @@ func (self *CacheHandler) FindCacheData(imageURL string) (ret []byte, err error)
 	}
 
 	if ret != nil && err == nil {
-		log.Printf("[LOCAL STORE HIT] %s", imageURL)
+		log.GetLogger().Infof("[LOCAL STORE HIT] %s", imageURL)
 		return
 	}
 
-	log.Printf("[LOCAL STORE MISS] %s", imageURL)
+	log.GetLogger().Infof("[LOCAL STORE MISS] %s", imageURL)
 
 	//从本地目录获取
 	ret, err = ioutil.ReadFile(imageURL)
 	if ret != nil && err == nil {
-		log.Printf("[LOCAL FILE HIT] %s", imageURL)
+		log.GetLogger().Infof("[LOCAL FILE HIT] %s", imageURL)
 		resourceDB.Set([]byte(imageURL), ret)
 		return
 	}
-	log.Printf("[LOCAL FILE MISS] %s", imageURL)
+	log.GetLogger().Infof("[LOCAL FILE MISS] %s", imageURL)
 
 	//从集群peer中获取
 	ret, err = self.AskPeers(imageURL)
 	if ret != nil && err == nil {
-		log.Printf("[PEER TCP HIT] %s", imageURL)
+		log.GetLogger().Infof("[PEER TCP HIT] %s", imageURL)
 		resourceDB.Set([]byte(imageURL), ret)
 	}
 	return
@@ -120,12 +120,12 @@ func (self *CacheHandler) getPeerCache(imageURL string, p *app.PeerInfo) ([]byte
 
 	defer func() {
 		if hclient != nil {
-			log.Println("cache handler close hclient")
+			log.GetLogger().Infoln("cache handler close hclient")
 			hclient.Shutdown()
 		}
 	}()
 	if err != nil {
-		log.Println("connect to peer fail")
+		log.GetLogger().Infoln("connect to peer fail")
 		return nil, err
 	}
 

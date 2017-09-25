@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"github.com/domac/dfc/app"
+	"github.com/domac/dfc/log"
 	"github.com/domac/dfc/web"
-	"log"
+	l "log"
 	_ "net/http/pprof"
 )
 
@@ -19,24 +20,23 @@ func main() {
 	println(app.Version)
 	flag.Parse()
 
-	log.Printf("app config file : %s\n", *config)
 	cfg, err := app.LoadConfig(*config)
 	if err != nil {
-		log.Fatal(err)
+		l.Fatal(err)
 		return
 	}
 
 	//start up app server
 	if err := app.Startup(cfg); err != nil {
-		log.Fatal(err)
+		l.Fatal(err)
 		return
 	}
 
 	//open http server
-	log.Printf("app is listening %s", cfg.Http_address)
+	log.GetLogger().Infof("app is listening: %s", cfg.Http_address)
 	httpServer, err := web.InitServer(cfg.Http_address)
 	if err != nil {
-		log.Fatal(err)
+		log.GetLogger().Error(err)
 		return
 	}
 
@@ -51,5 +51,5 @@ func main() {
 	app.On(app.EXIT, app.Shutdown)
 	app.Wait()
 	app.Emit(app.EXIT, nil)
-	log.Println("dfc is exit now !")
+	log.GetLogger().Infoln("dfc is exit now !")
 }

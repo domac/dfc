@@ -3,9 +3,9 @@ package app
 import (
 	"errors"
 	"fmt"
+	"github.com/domac/dfc/log"
 	"github.com/domac/husky"
 	"github.com/domac/husky/pb"
-	"log"
 	"time"
 )
 
@@ -39,9 +39,9 @@ func NewSessionServer(cfg *AppConfig) (*SessionServer, error) {
 }
 
 func (self *SessionServer) Start() {
-	log.Println("open session management")
+	log.GetLogger().Infoln("open session management")
 
-	log.Printf("session tcp server : %s\n", self.tcpAddr)
+	log.GetLogger().Infof("session tcp server : %s", self.tcpAddr)
 
 	simpleServer := husky.NewServer(self.tcpAddr, self.hconfig, func(remoteClient *husky.HClient, p *husky.Packet) {
 
@@ -52,21 +52,21 @@ func (self *SessionServer) Start() {
 			key := string(bm.GetBody())
 
 			//从in-memory中尝试获取
-			log.Printf("request key is %s", key)
+			log.GetLogger().Infof("request key is %s", key)
 			val, err := DefaultCacheServer.Cache().Get([]byte(key))
 			if err != nil || val == nil {
-				log.Println("local in-memory miss, try kv store")
+				log.GetLogger().Infoln("local in-memory miss, try kv store")
 				val, err = DefaultResourceDB.Get([]byte(key))
 				if err != nil || val == nil {
-					log.Println("kv store miss")
+					log.GetLogger().Infoln("kv store miss")
 					resp := husky.NewPacket([]byte("get string"))
 					remoteClient.Write(*resp)
 					return
 				} else {
-					log.Println("kv store hit")
+					log.GetLogger().Infoln("kv store hit")
 				}
 			} else {
-				log.Println("local in-memory hit")
+				log.GetLogger().Infoln("local in-memory hit")
 			}
 			//直接回写回去
 			resp := husky.NewPbBytesPacket(p.Header.PacketId, "demo_server_function", val)
@@ -126,10 +126,9 @@ func CreatePeerSession(p *PeerInfo) (*husky.HClient, error) {
 	}
 
 	tcp_addr := fmt.Sprintf("%s:%s", p.Addr, p.Tcp_port)
-	log.Printf("create a %s session to %s\n", p.Peer_type, tcp_addr)
+	log.GetLogger().Infof("create a %s session to %s\n", p.Peer_type, tcp_addr)
 	conn, err := husky.Dial(tcp_addr)
 	if err != nil {
-		log.Println(">>>>ERROR:", err.Error())
 		return nil, err
 	}
 	simpleClient := husky.NewClient(conn, nil, nil)

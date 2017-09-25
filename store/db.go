@@ -1,8 +1,8 @@
 package store
 
 import (
+	"github.com/domac/dfc/log"
 	"github.com/syndtr/goleveldb/leveldb"
-	"log"
 )
 
 //资料存储层
@@ -11,7 +11,7 @@ type ResourceDB struct {
 }
 
 func OpenResourceDB(filepath string) (*ResourceDB, error) {
-	log.Println("opening a new resourceDB")
+	log.GetLogger().Infoln("opening a new resourceDB")
 	db, err := leveldb.OpenFile(filepath, nil)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (self *ResourceDB) Keys() []string {
 }
 
 func (self *ResourceDB) Close() error {
-	log.Println("resourceDB is closing")
+	log.GetLogger().Infoln("resourceDB is closing")
 	if self.DB != nil {
 		return self.DB.Close()
 	}

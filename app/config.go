@@ -9,6 +9,8 @@ import (
 //应用配置
 type AppConfig struct {
 	Name                 string
+	Log_path             string
+	Log_level            string
 	Http_address         string
 	Tcp_address          string
 	Local_store_path     string

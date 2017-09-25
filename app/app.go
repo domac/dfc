@@ -3,8 +3,8 @@ package app
 import (
 	"errors"
 	c "github.com/domac/dfc/cache"
+	"github.com/domac/dfc/log"
 	"github.com/domac/dfc/store"
-	"log"
 	"runtime/debug"
 )
 
@@ -34,6 +34,11 @@ func Startup(cfg *AppConfig) (err error) {
 		return
 	}
 
+	//初始化日志
+	log.LogInit(cfg.Log_path, cfg.Log_level)
+
+	log.GetLogger().Infoln("服务初始化")
+
 	DefaultCacheServer = NewDFCServer(cfg)
 
 	//启动会话服务
@@ -42,9 +47,10 @@ func Startup(cfg *AppConfig) (err error) {
 		sessionServer.Start()
 	}
 
+	//初始化本地KV存储
 	DefaultResourceDB, err = store.OpenResourceDB(cfg.Local_store_path)
 	if err != nil {
-		log.Println(err.Error())
+		log.GetLogger().Infoln(err.Error())
 	}
 
 	peerInfos := cfg.Peer
@@ -60,7 +66,7 @@ func Shutdown(i interface{}) {
 	if DefaultResourceDB != nil {
 		DefaultResourceDB.Close()
 	}
-	log.Println("application ready to shutdown")
+	log.GetLogger().Infoln("application ready to shutdown")
 }
 
 //处理缓存请求服务
@@ -70,7 +76,7 @@ type DFCServer struct {
 }
 
 func NewDFCServer(cfg *AppConfig) *DFCServer {
-	log.Printf("dfc max cache object size: %d | expired seconds: %d\n",
+	log.GetLogger().Infof("dfc max cache object size: %d | expired seconds: %d",
 		cfg.Cache_max_size, cfg.Cache_ttl)
 	debug.SetGCPercent(20)
 	return &DFCServer{
