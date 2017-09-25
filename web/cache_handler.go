@@ -85,7 +85,7 @@ func (self *CacheHandler) FindCacheData(imageURL string) (ret []byte, err error)
 	log.GetLogger().Infof("[LOCAL FILE MISS] %s", imageURL)
 
 	//从集群peer中获取
-	ret, err = self.AskPeers(imageURL)
+	ret, err = self.FindCacheDataByParents(imageURL)
 	if ret != nil && err == nil {
 		log.GetLogger().Infof("[PEER TCP HIT] %s", imageURL)
 		resourceDB.Set([]byte(imageURL), ret)
@@ -94,7 +94,7 @@ func (self *CacheHandler) FindCacheData(imageURL string) (ret []byte, err error)
 }
 
 //向集群其它节点请求缓存数据
-func (self *CacheHandler) AskPeers(imageURL string) (ret []byte, err error) {
+func (self *CacheHandler) FindCacheDataByParents(imageURL string) (ret []byte, err error) {
 	rr := app.DefaultPeerRoundRobin
 
 	err = ErrNoPeer
@@ -133,7 +133,7 @@ func (self *CacheHandler) getPeerCache(imageURL string, p *app.PeerInfo) ([]byte
 	resp, err := hclient.SyncWrite(*req, 1*time.Second)
 
 	if err != nil {
-		println(">>>", err.Error())
+		log.GetLogger().Error(err)
 		return nil, err
 	}
 
