@@ -51,7 +51,7 @@ func (self *CacheHandler) Cache(ctx *Context) {
 
 		err = cacheServer.Set(imageURL, b)
 		if err != nil {
-			println(err.Error())
+			log.GetLogger().Error(err)
 		}
 		ctx.W.Write(b)
 	} else {
@@ -93,12 +93,22 @@ func (self *CacheHandler) FindCacheData(imageURL string) (ret []byte, err error)
 	return
 }
 
-//向集群其它节点请求缓存数据
+//向集群邻居节点请求缓存数据
+//TODO
+func (self *CacheHandler) FindCacheDataBySiblings(imageURL string) (ret []byte, err error) {
+	rr := app.DefaultPeerRoundRobin
+	err = ErrNoPeer
+	if rr == nil || rr.ParentWrr == nil {
+		return
+	}
+
+	return
+}
+
+//向集群上层节点请求缓存数据
 func (self *CacheHandler) FindCacheDataByParents(imageURL string) (ret []byte, err error) {
 	rr := app.DefaultPeerRoundRobin
-
 	err = ErrNoPeer
-
 	if rr == nil || rr.ParentWrr == nil {
 		return
 	}
@@ -114,6 +124,7 @@ func (self *CacheHandler) FindCacheDataByParents(imageURL string) (ret []byte, e
 	return
 }
 
+//获取单个伙伴缓存数据
 func (self *CacheHandler) getPeerCache(imageURL string, p *app.PeerInfo) ([]byte, error) {
 
 	hclient, err := app.CreatePeerSession(p)
@@ -146,8 +157,10 @@ func (self *CacheHandler) getPeerCache(imageURL string, p *app.PeerInfo) ([]byte
 	return nil, nil
 }
 
+//缓存key请求检查
 func (self *CacheHandler) checkUrl(url string) bool {
 	if url == "" || len(url) < 5 {
+		log.GetLogger().Errorf("key [%s] is invalid", url)
 		return false
 	}
 	return true
