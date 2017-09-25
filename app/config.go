@@ -39,6 +39,31 @@ type PeerInfo struct {
 	Weight    int
 }
 
+func (self *AppConfig) GetParentPeerNodes() ([]*PeerInfo, error) {
+	return self.getPeerNodes("parent")
+}
+
+func (self *AppConfig) GetSublingPeerNodes() ([]*PeerInfo, error) {
+	return self.getPeerNodes("sibling")
+}
+
+func (self *AppConfig) getPeerNodes(ptype string) ([]*PeerInfo, error) {
+	peers := self.Peer
+	if ptype != "" && len(peers) > 0 {
+		results := []*PeerInfo{}
+		for _, p := range peers {
+			if p.Peer_type != ptype {
+				continue
+			}
+			results = append(results, p)
+		}
+		if len(results) > 0 {
+			return results, nil
+		}
+	}
+	return nil, errors.New("no peers")
+}
+
 func LoadConfig(filepath string) (*AppConfig, error) {
 	if filepath == "" {
 		return nil, errors.New("the config file dir is empty")

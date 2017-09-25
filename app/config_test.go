@@ -22,4 +22,7 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	fmt.Printf("%v", cfg)
+
+	pp, _ := cfg.GetParentPeerNodes()
+	fmt.Printf("parents count : %d\n", len(pp))
 }

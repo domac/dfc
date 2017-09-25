@@ -8,10 +8,12 @@ import (
 	"github.com/domac/husky/pb"
 	"io/ioutil"
 	"net/http"
+	"sync"
 	"time"
 )
 
 var ErrNoPeer = errors.New("no peer found")
+var ErrNoPeerData = errors.New("no peer data")
 
 //cache api handler
 type CacheHandler struct {
@@ -96,12 +98,38 @@ func (self *CacheHandler) FindCacheData(imageURL string) (ret []byte, err error)
 //向集群邻居节点请求缓存数据
 //TODO
 func (self *CacheHandler) FindCacheDataBySiblings(imageURL string) (ret []byte, err error) {
-	rr := app.DefaultPeerRoundRobin
-	err = ErrNoPeer
-	if rr == nil || rr.ParentWrr == nil {
+	//获取邻居节点
+	siblingNodes, err1 := app.DefaultCacheServer.GetConfig().GetSublingPeerNodes()
+	if err1 != nil || siblingNodes == nil {
 		return
 	}
+	wg := sync.WaitGroup{}
 
+	//请求结果
+	resultsMap := make(map[string][]byte)
+	for _, sp := range siblingNodes {
+		wg.Add(1)
+		go func(p *app.PeerInfo, lock *sync.WaitGroup) {
+			defer lock.Done()
+			ret, err := self.getPeerCache(imageURL, p)
+			if err == nil && ret != nil {
+				log.GetLogger().Infof("[%s] %s get cache success", p.Name, p.Addr)
+				resultsMap[p.Addr] = ret
+			}
+		}(sp, &wg)
+	}
+	wg.Wait()
+
+	if len(resultsMap) == 0 {
+		return nil, ErrNoPeerData
+	}
+
+	for addr, ret := range resultsMap {
+		if len(ret) > 0 {
+			log.GetLogger().Infof("get cache from sibling %s", addr)
+			return ret, nil
+		}
+	}
 	return
 }
 
