@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"github.com/domac/dfc/app"
 	"github.com/domac/husky"
 	"github.com/domac/husky/pb"
@@ -9,6 +10,8 @@ import (
 	"net/http"
 	"time"
 )
+
+var ErrNoPeer = errors.New("no peer found")
 
 //cache api handler
 type CacheHandler struct {
@@ -94,8 +97,10 @@ func (self *CacheHandler) FindCacheData(imageURL string) (ret []byte, err error)
 func (self *CacheHandler) AskPeers(imageURL string) (ret []byte, err error) {
 	rr := app.DefaultPeerRoundRobin
 
-	if rr.ParentWrr == nil {
-		return nil, nil
+	err = ErrNoPeer
+
+	if rr == nil || rr.ParentWrr == nil {
+		return
 	}
 	//获取合适权重的节点
 	np := rr.ParentWrr.Next()

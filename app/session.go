@@ -51,11 +51,22 @@ func (self *SessionServer) Start() {
 
 			key := string(bm.GetBody())
 
-			//如果value过大,可能会出错
+			//从in-memory中尝试获取
 			log.Printf("request key is %s", key)
-			val, _ := DefaultCacheServer.Cache().Get([]byte(key))
-			if DefaultCacheServer == nil {
-				log.Println("cache server is null")
+			val, err := DefaultCacheServer.Cache().Get([]byte(key))
+			if err != nil || val == nil {
+				log.Println("local in-memory miss, try kv store")
+				val, err = DefaultResourceDB.Get([]byte(key))
+				if err != nil || val == nil {
+					log.Println("kv store miss")
+					resp := husky.NewPacket([]byte("get string"))
+					remoteClient.Write(*resp)
+					return
+				} else {
+					log.Println("kv store hit")
+				}
+			} else {
+				log.Println("local in-memory hit")
 			}
 			//直接回写回去
 			resp := husky.NewPbBytesPacket(p.Header.PacketId, "demo_server_function", val)

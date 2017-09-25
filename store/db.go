@@ -5,9 +5,6 @@ import (
 	"log"
 )
 
-//const KEY_PREFIX = "dfc:cache:"
-const KEY_PREFIX = ""
-
 //资料存储层
 type ResourceDB struct {
 	*leveldb.DB
@@ -23,6 +20,7 @@ func OpenResourceDB(filepath string) (*ResourceDB, error) {
 	return resourceDB, nil
 }
 
+//从本地kv获取数据
 func (self *ResourceDB) Get(key []byte) ([]byte, error) {
 	return self.DB.Get(key, nil)
 }
@@ -42,6 +40,7 @@ func (self *ResourceDB) Update(key []byte, value []byte) error {
 	return self.DB.Write(batch, nil)
 }
 
+//统计本地kv当前keys信息
 func (self *ResourceDB) Keys() []string {
 	cumul := []string{}
 	iter := self.DB.NewIterator(nil, nil)
