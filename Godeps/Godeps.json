@@ -15,11 +15,11 @@
 		},
 		{
 			"ImportPath": "github.com/domac/husky",
-			"Rev": "c2a229f148608ce29186438a321696fc73807e01"
+			"Rev": "b5ecf8e99dd1e536e3fa3a26bc2865aa0faed436"
 		},
 		{
 			"ImportPath": "github.com/domac/husky/pb",
-			"Rev": "c2a229f148608ce29186438a321696fc73807e01"
+			"Rev": "b5ecf8e99dd1e536e3fa3a26bc2865aa0faed436"
 		},
 		{
 			"ImportPath": "github.com/golang/protobuf/proto",

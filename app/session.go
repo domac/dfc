@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const MAX_PACKET_SIZE = 512 * 1024
+
 //session server with rate limit
 type SessionServer struct {
 	hconfig *husky.HConfig
@@ -30,7 +32,8 @@ func NewSessionServer(cfg *AppConfig) (*SessionServer, error) {
 		time.Duration(cfg.Idle_time)*time.Second,
 		cfg.Max_seqId,
 		cfg.Init_reqs_per_second,
-		cfg.Max_reqs_per_second)
+		cfg.Max_reqs_per_second,
+		MAX_PACKET_SIZE)
 
 	return &SessionServer{
 		hconfig: hc,
