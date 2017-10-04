@@ -2,6 +2,7 @@ package web
 
 import (
 	"errors"
+	"fmt"
 	"github.com/domac/dfc/app"
 	"github.com/domac/dfc/log"
 	"github.com/domac/husky"
@@ -199,4 +200,22 @@ func (self *CacheHandler) checkUrl(url string) bool {
 		return false
 	}
 	return true
+}
+
+//当前的缓存状态信息
+func (self *CacheHandler) CacheStats(ctx *Context) {
+
+	cacheServer, err := app.GetCacheServer()
+	if err != nil {
+		reponsePlainTextWithStatusCode(ctx.W, http.StatusServiceUnavailable, "")
+		return
+	}
+
+	entryCount := cacheServer.Cache().EntryCount()
+	expiredCount := cacheServer.Cache().ExpiredCount()
+
+	//缓存当前信息
+	statsInfo := fmt.Sprintf("entryCount : %d\nexpiredCount: %d\n", entryCount, expiredCount)
+
+	ctx.W.Write([]byte(statsInfo))
 }
