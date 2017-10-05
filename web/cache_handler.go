@@ -213,9 +213,17 @@ func (self *CacheHandler) CacheStats(ctx *Context) {
 
 	entryCount := cacheServer.Cache().EntryCount()
 	expiredCount := cacheServer.Cache().ExpiredCount()
+	hitRate := cacheServer.Cache().HitRate() //命中率
+
+	resourceDB, err := app.GetResourceDB()
+	localKeysCount := len(resourceDB.Keys())
+	if err != nil {
+		localKeysCount = 0
+	}
 
 	//缓存当前信息
-	statsInfo := fmt.Sprintf("entryCount : %d\nexpiredCount: %d\n", entryCount, expiredCount)
+	statsInfo := fmt.Sprintf("in_memoty_entry_count : %d\nin_memoty_expired_count: %d\nin_memoty_hitrate: %f\nlocal_keys_count: %d\n",
+		entryCount, expiredCount, hitRate, localKeysCount)
 
 	ctx.W.Write([]byte(statsInfo))
 }
